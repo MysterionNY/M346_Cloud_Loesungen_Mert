@@ -8,7 +8,7 @@ users:
     groups: [adm, sudo]
     shell: /bin/bash
     ssh_authorized_keys:
-      # Private aws key mert1
+      # Public aws key mert1
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxzqd8EpxDmz0NPxozSSw5ndHiMfHE+3LpVgmK197oWHArexunNFzxox6EB0RVDwH6Fx9bppfTCkdl49NSHF+IojyC2MN+H+llsiKZWI82f8jGjUsx2nzprP+MAgdgcMmDEBtTowa6fxNIm1jHofLAuKrxA1+wjM90laZfHxoVzf51PdUfN9jyiqYho4MomJGwWZtd4NX55aVkpBuCM0TEA9HhXNfTHC/cHsXNSpVZ3nQQ3xcaW2sjhkF0re9PPQUFE2bBZItruFfqpZt6VUoid+8V98Ri9wP1zzW3wXxyRsH1imTGm73Kul9DN6speI3rXArXXVZno+t/gD6mepoR mert-key
 
       # SSH-Key Lerhperson
