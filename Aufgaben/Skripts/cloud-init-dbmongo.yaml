@@ -1,0 +1,70 @@
+#cloud-config
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: users, admin
+    home: /home/ubuntu
+    shell: /bin/bash
+    ssh_authorized_keys:
+      # SSH-Key Mert
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxzqd8EpxDmz0NPxozSSw5ndHiMfHE+3LpVgmK197oWHArexunNFzxox6EB0RVDwH6Fx9bppfTCkdl49NSHF+IojyC2MN+H+llsiKZWI82f8jGjUsx2nzprP+MAgdgcMmDEBtTowa6fxNIm1jHofLAuKrxA1+wjM90laZfHxoVzf51PdUfN9jyiqYho4MomJGwWZtd4NX55aVkpBuCM0TEA9HhXNfTHC/cHsXNSpVZ3nQQ3xcaW2sjhkF0re9PPQUFE2bBZItruFfqpZt6VUoid+8V98Ri9wP1zzW3wXxyRsH1imTGm73Kul9DN6speI3rXArXXVZno+t/gD6mepoR mert-key
+ssh_pwauth: false
+disable_root: false  
+package_update: true 
+packages:
+  - curl
+  - wget
+  - nginx
+  - openjdk-17-jre-headless
+write_files:
+  - content: |
+      [Unit]
+      Description=Demo Shop
+      After=syslog.target
+      [Service]
+      WorkingDirectory=/var/www/app
+      User=www-data
+      ExecStart=java -jar /var/www/app/shopdemo-1.0.0.jar --spring.config.additional-location=/var/www/app/production.properties SuccessExitStatus=143 
+      Restart=always
+      RestartSec=10
+      [Install] 
+      WantedBy=multi-user.target
+    path: /etc/systemd/system/shop-app.service
+  - content: |
+      server {
+        listen        80;
+        server_name   default;
+        location / {
+          proxy_pass         http://127.0.0.1:5001;
+          proxy_http_version 1.1;
+          proxy_set_header   Upgrade $http_upgrade;
+          proxy_set_header   Connection keep-alive;
+          proxy_set_header   Host $host;
+          proxy_cache_bypass $http_upgrade;
+          proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header   X-Forwarded-Proto $scheme;
+        }
+      }
+    path: /home/ubuntu/nginx
+runcmd:
+  - sudo git clone https://gitlab.com/ch-tbz-it/Stud/m346/m346scripts.git /home/ubuntu/m346scripts
+  # install mongodb shell
+  - sudo wget -qO- https://www.mongodb.org/static/pgp/server-6.0.asc | sudo tee /etc/apt/trusted.gpg.d/server-6.0.asc
+  - sudo echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+  - sudo apt-get update
+  - sudo apt-get install -y mongodb-mongosh
+  # import mongodb collections
+  - mongosh "mongodb+srv://m346.2tp4edd.mongodb.net/" --u m346_mert -p 4n9FCZWj1RRKO4i4 < /home/ubuntu/m346scripts/KN06/shop-database-mongodb.txt
+  # install App
+  - sudo mkdir /var/www
+  - sudo mkdir /var/www/app
+  - sudo sed -i 's/<clusterUrl>/m346.2tp4edd.mongodb.net/g' /home/ubuntu/m346scripts/KN06/java/production.properties
+  - sudo sed -i 's/<username>/m346_mert/g' /home/ubuntu/m346scripts/KN06/java/production.properties
+  - sudo sed -i 's/<password>/4n9FCZWj1RRKO4i4/g' /home/ubuntu/m346scripts/KN06/java/production.properties
+  - sudo cp -r /home/ubuntu/m346scripts/KN06/java/* /var/www/app/
+  - sudo systemctl enable shop-app.service
+  - sudo systemctl start shop-app.service
+  - sudo service nginx start
+  - sudo cp /home/ubuntu/nginx /etc/nginx/sites-available/default
+  - sudo nginx -s reload
+
